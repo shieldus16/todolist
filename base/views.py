@@ -124,19 +124,12 @@ class TaskReorder(View):
 
 class FileDownloadView(View):
     def get(self, request, pk):
-        # Task 모델에서 해당 파일을 얻습니다.
         task = Task.objects.get(pk=pk)
-
-        # 해당 파일의 경로를 얻습니다.
         file_path = task.file_upload.path
 
-        # MIME 타입을 얻습니다.
         mime_type, _ = mimetypes.guess_type(file_path)
-
-        # MIME 타입이 없는 경우 기본값을 사용할 수 있습니다.
         mime_type = mime_type or 'application/octet-stream'
 
-        # 파일을 FileResponse로 반환합니다.
         response = FileResponse(default_storage.open(file_path, 'rb'), content_type=mime_type)
         response['Content-Disposition'] = f'attachment; filename={task.file_upload.name}'
         return response
@@ -157,12 +150,14 @@ class OtherUserTaskList(ListView):
         context['user'] = user
         # 현재 로그인한 사용자를 제외한 모든 사용자를 가져와 템플릿에 전달
         context['other_users'] = User.objects.exclude(id=self.request.user.id)
+        context['is_admin'] = self.request.user.is_staff
         return context
-
+    
     def get_queryset(self):
         user_id = self.kwargs.get('user_id')
         user = get_object_or_404(User, id=user_id)
-        return Task.objects.filter(user=user)
+        # flag 값이 True이고 해당 사용자의 투두리스트만 가져오기
+        return Task.objects.filter(user=user, flag=True)
 
 
 
