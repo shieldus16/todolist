@@ -17,9 +17,9 @@ from .models import Task
 from .forms import PositionForm
 from django.http import HttpResponse
 
-from django.views.generic.detail import SingleObjectMixin
 from django.http import FileResponse
-from django.core.files.storage import FileSystemStorage
+import mimetypes
+from django.core.files.storage import default_storage
 
 class CustomLoginView(LoginView):
     template_name = 'base/login.html'
@@ -51,6 +51,10 @@ class RegisterPage(FormView):
 class TaskList(LoginRequiredMixin, ListView):
     model = Task
     context_object_name = 'tasks'
+    
+    def get_queryset(self):
+        # 현재 사용자와 flag가 True인 Task만 필터링하여 반환
+        return Task.objects.filter(user=self.request.user, flag=True)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -92,15 +96,18 @@ class TaskUpdate(LoginRequiredMixin, UpdateView):
     fields = ['title', 'description', 'complete', 'file_upload']
     success_url = reverse_lazy('tasks')
 
+class SoftDeleteTaskView(DeleteView):
+    template_name ='base/task_confirm_delete.html'
 
+    def get(self, request, pk):
+        model = Task.objects.get(pk=pk)
+        return render(request, self.template_name, {'task': model})
 
-class DeleteView(LoginRequiredMixin, DeleteView):
-    model = Task
-    context_object_name = 'task'
-    success_url = reverse_lazy('tasks')
-    def get_queryset(self):
-        owner = self.request.user
-        return self.model.objects.filter(user=owner)
+    def post(self, request, pk):
+        task = Task.objects.get(pk=pk)
+        task.flag = False
+        task.save()
+        return redirect('tasks')
 
 class TaskReorder(View):
     def post(self, request):
@@ -114,17 +121,30 @@ class TaskReorder(View):
 
         return redirect(reverse_lazy('tasks'))
     
-    
-# class FileDownloadView(SingleObjectMixin, View):
-#     queryset = Task.objects.all()
 
-#     def get(self, request, id):
-#         object = self.get_object(id)
-            
-#         file_path = object.attached.path
-#         file_type = object.content_type 
-#         fs = FileSystemStorage(file_path)
-#         response = FileResponse(fs.open(file_path, 'rb'), content_type=file_type)
-#         response['Content-Disposition'] = f'attachment; filename={object.get_filename()}'
-            
-#         return response
+class FileDownloadView(View):
+    def get(self, request, pk):
+        # Task 모델에서 해당 파일을 얻습니다.
+        task = Task.objects.get(pk=pk)
+
+        # 해당 파일의 경로를 얻습니다.
+        file_path = task.file_upload.path
+
+        # MIME 타입을 얻습니다.
+        mime_type, _ = mimetypes.guess_type(file_path)
+
+        # MIME 타입이 없는 경우 기본값을 사용할 수 있습니다.
+        mime_type = mime_type or 'application/octet-stream'
+
+        # 파일을 FileResponse로 반환합니다.
+        response = FileResponse(default_storage.open(file_path, 'rb'), content_type=mime_type)
+        response['Content-Disposition'] = f'attachment; filename={task.file_upload.name}'
+        return response
+
+        # 파일을 다운로드할 파일이 없는 경우 처리
+        return HttpResponse("파일을 찾을 수 없습니다.", status=404)
+
+
+
+
+

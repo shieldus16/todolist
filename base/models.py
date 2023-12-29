@@ -17,7 +17,7 @@ class Task(models.Model):
 
     class Meta:
         order_with_respect_to = 'user'
-        
+    # 추가    
     def get_file_url(self):
         if self.file_upload:
             return reverse_lazy('file_download', kwargs={'pk': self.pk})

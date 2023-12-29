@@ -24,7 +24,6 @@
 </div>
 
 
-<!-- Hidden form. Form submits new item positions -->
 <form style="display: none;" id="reorderForm" method="post" action="{% url 'task-reorder' %}">
     {% csrf_token %}
     <input type="hidden" id="positionInput" name="position">
@@ -41,8 +40,9 @@
             <div class="task-incomplete-icon"></div>
             <a href="{% url 'task-update' task.id %}">{{task}}</a> {% endif %}
         </div>
+        <!--수정-->
         <div class="task-controls">
-            <a class="delete-link" href="{% url 'task-delete' task.id %}">&#215;</a>
+            <a class="delete-link" href="{% url 'soft_delete_task' task.id %}">&#215;</a>
             <span class="handle">&nbsp;&#10247;</span>
         </div>
     </div>

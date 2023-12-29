@@ -5,11 +5,18 @@
     <a href="{% url 'tasks' %}">&#8592; Back</a>
 </div>
 
-
 <div class="card-body">
     <form method="POST" action="" enctype="multipart/form-data">
         {% csrf_token %}
-        {{form.as_p}}
+        {{ form.title.label_tag }} {{ form.title }}
+        {{ form.description.label_tag }} {{ form.description }}
+        {{ form.complete }} {{ form.complete.label_tag }}
+        {{ form.file_upload.label_tag }} {{ form.file_upload }}
+        
+        {% if task.file_upload %}
+        <p>첨부 파일: {{ task.file_upload.name }}</p>
+        <a href="{% url 'download' pk=task.id %}">다운로드</a>
+        {% endif %}
         <input class="button" type="submit" value="Submit">
     </form>
 </div>
