@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic.list import ListView
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView, FormView
@@ -15,7 +15,7 @@ from django.db import transaction
 
 from .models import Task
 from .forms import PositionForm
-from django.http import HttpResponse
+from django.contrib.auth.models import User
 
 from django.http import FileResponse
 import mimetypes
@@ -143,6 +143,26 @@ class FileDownloadView(View):
 
         # 파일을 다운로드할 파일이 없는 경우 처리
         return HttpResponse("파일을 찾을 수 없습니다.", status=404)
+    
+class OtherUserTaskList(ListView):
+    model = Task
+    context_object_name = 'tasks'
+    template_name = 'base/other_user_task_list.html'
+
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user_id = self.kwargs.get('user_id')
+        user = get_object_or_404(User, id=user_id)
+        context['user'] = user
+        # 현재 로그인한 사용자를 제외한 모든 사용자를 가져와 템플릿에 전달
+        context['other_users'] = User.objects.exclude(id=self.request.user.id)
+        return context
+
+    def get_queryset(self):
+        user_id = self.kwargs.get('user_id')
+        user = get_object_or_404(User, id=user_id)
+        return Task.objects.filter(user=user)
 
 
 

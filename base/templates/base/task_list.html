@@ -7,7 +7,9 @@
         <h3 style="margin:0">You have <i>{{count}}</i> incomplete task{{ count|pluralize:"s" }}</h3>
     </div>
 
+    <!-- 수정 -->
     {% if request.user.is_authenticated %}
+    <a href="{% url 'other_user_tasks' user.id %}">다른 사용자 목록 보기</a>
     <a href="{% url 'logout' %}">Logout</a> {% else %}
     <a href="{% url 'login' %}">Login</a> {% endif %}
 </div>
@@ -16,7 +18,7 @@
 <div id="search-add-wrapper">
     <form method="GET" style="display: flex;">
         <input type='text' name='search-area' placeholder="Search your task" value="{{search_input}}">
-        <input class="button" type="submit" value='Search'>
+        <input class="button" type="submit" value='SEARCH'>
     </form>
     {% if tasks|length > 0 %}
     <a id="add-link" href="{% url 'task-create' %}">&#x2b;</a>
